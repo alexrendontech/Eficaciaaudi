@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encuestas Haridscount</title>
+    <!-- Meta tags anti-caché para actualizaciones en tiempo real -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Biblioteca SheetJS para exportación a Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <!-- FileSaver.js para mejor compatibilidad de descarga -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --c-primary: #344089;
+            --c-accent: #50a7d3;
+            --c-light: #96cbe4;
+            --c-primary-hover: #2c356f;
+            --c-accent-hover: #3b90bb;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        /* Estilos para el botón de descarga */
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        }
+    .pulse-animation:hover { animation: pulse-green 1.5s infinite; }
+        .tooltip {
+            position: relative;
+        }
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    /* Paleta aplicada */
+    .brand-gradient { background: linear-gradient(90deg,var(--c-primary), var(--c-accent)); }
+    .brand-gradient-alt { background: linear-gradient(90deg,var(--c-accent), var(--c-light)); }
+    .btn-primary { background: var(--c-primary); color:#fff; }
+    .btn-primary:hover { background: var(--c-primary-hover); }
+    .btn-accent { background: var(--c-accent); color:#fff; }
+    .btn-accent:hover { background: var(--c-accent-hover); }
+    .btn-outline-brand { border:1px solid var(--c-primary); color: var(--c-primary); }
+    .btn-outline-brand:hover { background: var(--c-primary); color:#fff; }
+    .header-title { color: var(--c-primary); }
+    .card-border-brand { border-color: var(--c-accent); }
+    .link-chip { background: var(--c-light); color: #102b3f; }
+    .link-chip:hover { background: var(--c-accent); color:#fff; }
+    .shadow-brand { box-shadow: 0 4px 14px -2px rgba(52,64,137,0.25); }
+    .logo-wrap img { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25)); }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+
+    <div class="container mx-auto max-w-7xl">
+        <div class="flex justify-between items-center mb-8 flex-wrap gap-6">
+            <div class="flex items-center gap-4">
+                <div class="logo-wrap w-20 h-20 flex items-center justify-center rounded-2xl bg-white shadow-brand border border-[var(--c-light)] p-2">
+                    <img src="logo_eficacia.png" alt="Logo" class="max-h-full max-w-full object-contain" loading="lazy">
+                </div>
+                <h1 class="text-4xl font-bold header-title leading-tight">Encuestas Haridscount 📊</h1>
+            </div>
+            
+            <!-- Botón de Exportación a Excel -->
+            <div class="tooltip">
+                <button id="export-excel-btn" class="flex items-center px-4 py-2 btn-primary rounded-xl transition-all pulse-animation shadow-brand">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Exportar a Excel
+                </button>
+                <span class="tooltip-text">Descargar todas las encuestas Haridscount en formato Excel</span>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+    <div class="bg-white p-6 rounded-2xl shadow-brand mb-8 flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4 border border-[var(--c-light)]">
+            <div class="w-full md:w-1/3">
+                <label for="filter-city" class="block text-sm font-medium text-gray-700">Filtrar por Ciudad:</label>
+                <select id="filter-city" class="mt-1 block w-full px-4 py-2 border border-[var(--c-accent)] rounded-xl shadow-sm focus:ring-[var(--c-accent)] focus:border-[var(--c-accent)] transition-colors duration-200">
+                    <option value="">Todas las Ciudades</option>
+                </select>
+            </div>
+            <div class="w-full md:w-1/3">
+                <label for="filter-gestor" class="block text-sm font-medium text-gray-700">Filtrar por Gestor:</label>
+                <select id="filter-gestor" class="mt-1 block w-full px-4 py-2 border border-[var(--c-accent)] rounded-xl shadow-sm focus:ring-[var(--c-accent)] focus:border-[var(--c-accent)] transition-colors duration-200">
+                    <option value="">Todos los Gestores</option>
+                </select>
+            </div>
+            <div class="w-full md:w-1/3">
+                <label for="filter-date" class="block text-sm font-medium text-gray-700">Filtrar por Fecha:</label>
+                <input type="date" id="filter-date" class="mt-1 block w-full px-4 py-2 border border-[var(--c-accent)] rounded-xl shadow-sm focus:ring-[var(--c-accent)] focus:border-[var(--c-accent)] transition-colors duration-200">
+            </div>
+        </div>
+        
+        <!-- Contenedor de auditorías -->
+        <div id="auditorias-container" class="space-y-6"></div>
+
+        <div id="loading-indicator" class="text-center mt-8 p-6">
+            <div class="inline-block animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full mb-2"></div>
+            <p class="text-gray-600">Cargando auditorías...</p>
+        </div>
+        
+        <div id="error-message" class="text-center bg-red-100 p-6 rounded-xl mt-8 hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-red-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p class="text-red-600">Error al cargar las auditorías.</p>
+            <p class="text-sm text-red-500 mt-2">Intenta recargar la página o revisa la consola para más detalles.</p>
+        </div>
+
+        <!-- Paginación (ahora reemplazada por infinite scroll) -->
+        <div id="pagination-controls" class="flex justify-center items-center space-x-4 mt-8 hidden">
+            <button id="prev-page" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed">Anterior</button>
+            <span id="page-info" class="text-gray-700 font-semibold">Página 1</span>
+            <button id="next-page" class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">Siguiente</button>
+        </div>
+        
+        <!-- Indicador de conexión y actualización en tiempo real -->
+        <div id="connection-status" class="fixed bottom-4 left-4 bg-white rounded-full shadow-lg p-3 z-50 opacity-90 hover:opacity-100 transition">
+            <div class="flex items-center space-x-3">
+                <span id="connection-indicator" class="w-3 h-3 rounded-full bg-gray-400 animate-pulse"></span>
+                <span id="connection-text" class="text-xs font-medium">Actualizaciones en tiempo real activas</span>
+                <button id="manual-refresh" class="ml-2 text-blue-600 hover:text-blue-800 transition" title="Refrescar manualmente">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-20 pb-8 text-center text-xs text-gray-500 select-none">
+            &copy; <span id="year-copy">2025</span> Desarrollado por Alex Rendon
+        </footer>
+    </div>
+
+    <!-- Modal Detalles -->
+    <div id="details-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-5xl w-full transform transition-all duration-300 scale-95 opacity-0">
+            <h4 class="text-3xl font-bold text-gray-900 mb-6 border-b pb-3">Detalles de la Auditoría</h4>
+            <div id="modal-content" class="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto max-h-[70vh] pr-2"></div>
+            <div class="mt-6 flex justify-center">
+                <button id="modal-close-button" class="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-300">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Alertas -->
+    <div id="alert-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-95 opacity-0">
+            <div class="text-center">
+                <div id="alert-icon" class="mx-auto mb-4"></div>
+                <h4 id="alert-title" class="text-2xl font-bold text-gray-900 mb-3"></h4>
+                <p id="alert-message" class="text-gray-600 mb-6"></p>
+                <button id="alert-close-button" class="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-300 w-full">
+                    Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mb-6 flex justify-center gap-4 flex-wrap">
+        <a href="metricas.html" class="inline-block px-6 py-3 brand-gradient text-white rounded-xl hover:brightness-110 transition-all shadow-brand font-medium">
+            📈 Métricas Diagnóstico
+        </a>
+
+        <a href="dashboard.html" class="inline-block px-8 py-4 brand-gradient text-white rounded-xl hover:brightness-110 transition-all transform hover:scale-105 shadow-brand flex items-center gap-3 font-semibold">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            🚀 Dashboard Ejecutivo
+        </a>
+        <a href="graficos.html" class="inline-block px-8 py-4 brand-gradient-alt text-[var(--c-primary)] hover:brightness-110 rounded-xl transition-all transform hover:scale-105 shadow-brand flex items-center gap-3 font-semibold">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+            </svg>
+            💼 BI Avanzado
+        </a>
+    </div>
+
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <script>
+        var firebaseConfig = {
+            apiKey: "AIzaSyDWvqMjPRtQcGK8ttQvTehA46Af4int5_s",
+            authDomain: "eficacia-auditoria.firebaseapp.com",
+            projectId: "eficacia-auditoria",
+            storageBucket: "eficacia-auditoria.firebasestorage.app",
+            messagingSenderId: "153550578197",
+            appId: "1:153550578197:web:124da4c2a08c5e3283e41c",
+            measurementId: "G-YJEZRJMZTG"
+        };
+        firebase.initializeApp(firebaseConfig);
+        var db = firebase.firestore();
+
+        let allAuditorias = [];
+        let filteredAuditorias = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let filtersPopulated = false; // Variable para rastrear si los filtros ya se llenaron
+
+        const auditoriasContainer = document.getElementById('auditorias-container');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const filterCity = document.getElementById('filter-city');
+        const filterGestor = document.getElementById('filter-gestor');
+        const filterDate = document.getElementById('filter-date');
+        const paginationControls = document.getElementById('pagination-controls');
+        const prevPageButton = document.getElementById('prev-page');
+        const nextPageButton = document.getElementById('next-page');
+        const pageInfo = document.getElementById('page-info');
+        const detailsModal = document.getElementById('details-modal');
+        const modalContent = document.getElementById('modal-content');
+        const modalCloseButton = document.getElementById('modal-close-button');
+        const alertModal = document.getElementById('alert-modal');
+        const alertCloseButton = document.getElementById('alert-close-button');
+
+        // Event listener para cerrar modal de alerta
+        alertCloseButton.addEventListener('click', function() {
+            const modalBox = alertModal.querySelector('div > div');
+            modalBox.classList.remove('scale-100', 'opacity-100');
+            modalBox.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                alertModal.classList.add('hidden');
+            }, 300);
+        });
+
+        // Util: parsear primer número dentro de un string (acepta coma como decimal)
+        function parseNumeric(respuesta) {
+            if (respuesta == null) return NaN;
+            const s = String(respuesta).trim();
+            if (s === '') return NaN;
+            const s2 = s.replace(',', '.');
+            const match = s2.match(/-?\d+(\.\d+)?/);
+            return match ? parseFloat(match[0]) : NaN;
+        }
+
+        // Cache local para almacenar resultados de consultas
+        const localCache = {
+            init: function() {
+                try {
+                    const cachedData = localStorage.getItem('auditorias_cache');
+                    if (cachedData) {
+                        const parsed = JSON.parse(cachedData);
+                        if (parsed.timestamp && (new Date().getTime() - parsed.timestamp < 3600000)) { // Caché válido por 1 hora
+                            console.log("🔄 Usando datos en caché mientras se actualiza...");
+                            allAuditorias = parsed.data || [];
+                            return true;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error al recuperar caché:", e);
+                }
+                return false;
+            },
+            save: function(data) {
+                try {
+                    const cacheObj = {
+                        timestamp: new Date().getTime(),
+                        data: data
+                    };
+                    localStorage.setItem('auditorias_cache', JSON.stringify(cacheObj));
+                } catch (e) {
+                    console.error("Error al guardar en caché:", e);
+                }
+            },
+            clear: function() {
+                try {
+                    localStorage.removeItem('auditorias_cache');
+                } catch (e) {
+                    console.error("Error al limpiar caché:", e);
+                }
+            }
+        };
+
+        // Implementar scrolling infinito en lugar de paginación
+        function setupInfiniteScroll() {
+            // Remover listeners antiguos si existen
+            window.removeEventListener('scroll', checkForNewLoad);
+            
+            // Configurar nuevo listener
+            window.addEventListener('scroll', checkForNewLoad);
+        }
+        
+        function checkForNewLoad() {
+            if (isLoadingMore || allDataLoaded) return;
+            
+            const scrollPos = window.scrollY + window.innerHeight;
+            const pageHeight = document.body.offsetHeight - 300; // 300px antes del final
+            
+            if (scrollPos >= pageHeight) {
+                console.log("🔄 Scrolling detectado cerca del final, cargando más...");
+                fetchAuditorias(true);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM Cargado. Iniciando sesión anónima...");
+            
+            // Intentar usar caché mientras se carga
+            const cacheHit = localCache.init();
+            if (cacheHit && allAuditorias.length > 0) {
+                populateFilters(allAuditorias);
+                applyFilters();
+            }
+            
+            firebase.auth().signInAnonymously()
+                .then(() => {
+                    console.log("🟢 Inicio de sesión anónima exitoso.");
+                    
+                    // 🔥 ACTIVAR LISTENER EN TIEMPO REAL (Mejores prácticas)
+                    setupRealtimeListener();
+                    
+                    // Actualizar indicador de conexión
+                    const indicator = document.getElementById('connection-indicator');
+                    const text = document.getElementById('connection-text');
+                    indicator.classList.remove('bg-gray-400', 'animate-pulse');
+                    indicator.classList.add('bg-green-500');
+                    text.textContent = 'Actualizaciones en tiempo real activas';
+                })
+                .catch(error => {
+                    console.error("🔴 Error al iniciar sesión anónima:", error);
+                    loadingIndicator.classList.add('hidden');
+                    errorMessage.classList.remove('hidden');
+                    
+                    // Actualizar indicador de error
+                    const indicator = document.getElementById('connection-indicator');
+                    const text = document.getElementById('connection-text');
+                    indicator.classList.remove('bg-gray-400', 'animate-pulse');
+                    indicator.classList.add('bg-red-500');
+                    text.textContent = 'Error de conexión';
+                });
+            
+            // 🔄 Botón de refresh manual
+            document.getElementById('manual-refresh').addEventListener('click', function() {
+                console.log("🔄 Refresh manual activado");
+                this.classList.add('animate-spin');
+                
+                // Reiniciar listener
+                if (realtimeListener) {
+                    realtimeListener();
+                }
+                setupRealtimeListener();
+                
+                setTimeout(() => {
+                    this.classList.remove('animate-spin');
+                }, 1000);
+            });
+            
+            // Limpiar listener al cerrar/salir de la página
+            window.addEventListener('beforeunload', function() {
+                if (realtimeListener) {
+                    console.log("🧹 Limpiando listener...");
+                    realtimeListener();
+                }
+            });
+            
+            // Eventos para filtros, optimizados con debounce
+            let filterTimeout;
+            
+            function debounceFilter() {
+                clearTimeout(filterTimeout);
+                filterTimeout = setTimeout(() => {
+                    applyFilters();
+                }, 300); // Esperar 300ms después de la última activación
+            }
+            
+            filterCity.addEventListener('change', debounceFilter);
+            filterGestor.addEventListener('change', debounceFilter);
+            filterDate.addEventListener('change', debounceFilter);
+            
+            // Cambiar de paginación a infinite scroll
+            // prevPageButton.addEventListener('click', () => changePage(-1));
+            // nextPageButton.addEventListener('click', () => changePage(1));
+            setupInfiniteScroll();
+            
+            modalCloseButton.addEventListener('click', closeModal);
+
+            // cerrar al hacer click fuera (overlay)
+            detailsModal.addEventListener('click', (e) => {
+                if (e.target === detailsModal) closeModal();
+            });
+            
+            // Indicador de estado de conexión
+            const connectionIndicator = document.getElementById('connection-indicator');
+            const connectionText = document.getElementById('connection-text');
+            
+            function updateConnectionStatus() {
+                if (navigator.onLine) {
+                    connectionIndicator.classList.remove('bg-red-500', 'bg-gray-400');
+                    connectionIndicator.classList.add('bg-green-500');
+                    connectionText.textContent = 'Conectado';
+                    
+                    // Comprobar si Firebase responde
+                    firebase.firestore().collection('_health').doc('ping').get()
+                        .then(() => {
+                            connectionIndicator.classList.remove('bg-yellow-500');
+                            connectionIndicator.classList.add('bg-green-500');
+                            connectionText.textContent = 'Conectado';
+                        })
+                        .catch(err => {
+                            console.warn("Firebase ping falló:", err);
+                            connectionIndicator.classList.remove('bg-green-500');
+                            connectionIndicator.classList.add('bg-yellow-500');
+                            connectionText.textContent = 'Conexión intermitente';
+                        });
+                } else {
+                    connectionIndicator.classList.remove('bg-green-500', 'bg-yellow-500', 'bg-gray-400');
+                    connectionIndicator.classList.add('bg-red-500');
+                    connectionText.textContent = 'Sin conexión';
+                }
+            }
+            
+            // Actualizar estado al inicio
+            updateConnectionStatus();
+            
+            // Actualizar cada vez que cambia la conectividad
+            window.addEventListener('online', updateConnectionStatus);
+            window.addEventListener('offline', updateConnectionStatus);
+            
+            // Actualizar periódicamente
+            setInterval(updateConnectionStatus, 30000);
+            
+            // Botón de recarga completa (limpia caché)
+            const refreshButton = document.createElement('button');
+            refreshButton.className = 'absolute top-4 right-4 bg-blue-100 p-2 rounded-full hover:bg-blue-200 transition';
+            refreshButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>';
+            refreshButton.title = "Recargar datos";
+            document.querySelector('.container').appendChild(refreshButton);
+            
+            refreshButton.addEventListener('click', () => {
+                localCache.clear();
+                allAuditorias = [];
+                lastDoc = null;
+                allDataLoaded = false;
+                filtersPopulated = false; // Reiniciar estado de los filtros
+                
+                loadingIndicator.classList.remove('hidden');
+                auditoriasContainer.innerHTML = '';
+                
+                // Reiniciar filtros
+                while (filterCity.options.length > 1) filterCity.remove(1);
+                while (filterGestor.options.length > 1) filterGestor.remove(1);
+                filterCity.selectedIndex = 0;
+                filterGestor.selectedIndex = 0;
+                filterDate.value = '';
+                
+                // Actualizar indicador de conexión
+                updateConnectionStatus();
+                
+                // Cargar datos nuevos
+                fetchAuditorias();
+            });
+        });
+
+        function getDatosGenerales(auditoria) {
+            // Usar un objeto de cache para reducir búsquedas repetidas
+            if (auditoria._datosCache) {
+                return auditoria._datosCache;
+            }
+            
+            let resultado = {};
+            
+            if (auditoria.auditoria && auditoria.auditoria["Datos Generales"]) {
+                const datos = auditoria.auditoria["Datos Generales"];
+                // Hacer una sola iteración sobre los datos para extraer todos los valores
+                const datosObj = {};
+                
+                for (const item of datos) {
+                    const pregunta = item.pregunta || "";
+                    
+                    if (pregunta.includes("Fecha")) datosObj.fecha = item.respuesta || "";
+                    else if (pregunta.includes("Nombre Auditor") || pregunta.includes("Nombre del Gestor")) datosObj.nombreGestor = item.respuesta || "";
+                    else if (pregunta.includes("Ciudad")) datosObj.ciudad = item.respuesta || "";
+                    else if (pregunta.includes("Nombre PDV") || pregunta.includes("Punto de Venta")) datosObj.puntoVenta = item.respuesta || "";
+                }
+                
+                resultado = {
+                    fecha: datosObj.fecha || "",
+                    nombreGestor: datosObj.nombreGestor || "",
+                    ciudad: datosObj.ciudad || "",
+                    puntoVenta: datosObj.puntoVenta || ""
+                };
+            } else if (auditoria.pasos) {
+                let pasosData = auditoria.pasos;
+                if (!Array.isArray(pasosData) && typeof pasosData === 'object') {
+                    pasosData = Object.values(pasosData);
+                }
+                
+                const paso1 = Array.isArray(pasosData) ? pasosData.find(p => p.paso == 1) : null;
+                resultado = paso1 || {};
+            }
+            
+            // Guardar en caché para uso futuro
+            auditoria._datosCache = resultado;
+            return resultado;
+        }
+
+    // Variables para controlar la carga por lotes
+    let lastDoc = null;
+    const batchSize = 50; // Aumentado para mejor rendimiento
+    let isLoadingMore = false;
+    let allDataLoaded = false;
+    let realtimeListener = null; // Listener en tiempo real
+    
+    // LISTENER EN TIEMPO REAL - Mejores prácticas modernas
+    function setupRealtimeListener() {
+        console.log("🔴 Configurando listener en tiempo real...");
+        
+        // Limpiar listener anterior si existe
+        if (realtimeListener) {
+            realtimeListener();
+        }
+        
+        // Escuchar cambios en tiempo real
+        realtimeListener = db.collectionGroup('auditorias')
+            .limit(batchSize)
+            .onSnapshot((snapshot) => {
+                console.log("🟢 Actualización en tiempo real detectada");
+                
+                const newAuditorias = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(doc => doc.tipoEncuesta === 'haridscount')
+                    .sort((a, b) => {
+                        const timestampA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                        const timestampB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                        return timestampB - timestampA;
+                    });
+                
+                allAuditorias = newAuditorias;
+                
+                if (!filtersPopulated) {
+                    populateFilters(allAuditorias);
+                }
+                
+                // Mostrar mensaje si no hay encuestas
+                if (allAuditorias.length === 0) {
+                    errorMessage.classList.remove('hidden');
+                    errorMessage.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-blue-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="text-blue-600 font-semibold">No hay encuestas Haridscount registradas</p>
+                        <p class="text-sm text-gray-600 mt-2">
+                            Las encuestas creadas con el nuevo formulario aparecerán aquí.<br>
+                            Las auditorías antiguas no se muestran en esta vista.
+                        </p>
+                    `;
+                } else {
+                    errorMessage.classList.add('hidden');
+                }
+                
+                applyFilters();
+                loadingIndicator.classList.add('hidden');
+            }, (error) => {
+                console.error("🔴 Error en listener en tiempo real:", error);
+                errorMessage.classList.remove('hidden');
+                loadingIndicator.classList.add('hidden');
+            });
+    }
+    
+    // Función legacy para carga manual (mantenida como respaldo)
+    async function fetchAuditorias(loadMore = false) {
+        if (isLoadingMore || (loadMore && allDataLoaded)) return;
+        
+        console.log(loadMore ? "🟠 Cargando más encuestas..." : "🟠 Cargando primeras encuestas...");
+        loadingIndicator.classList.remove('hidden');
+        isLoadingMore = true;
+        
+        try {
+            // Obtener todas las auditorías y filtrar en el cliente
+            let query = db.collectionGroup('auditorias').limit(batchSize);
+            
+            if (loadMore && lastDoc) {
+                query = query.startAfter(lastDoc);
+            } else if (!loadMore) {
+                // Si no estamos cargando más, es una nueva búsqueda
+                allAuditorias = [];
+            }
+            
+            const snapshot = await query.get();
+            
+            if (snapshot.empty) {
+                allDataLoaded = true;
+                console.log("📊 No hay más encuestas para cargar");
+            } else {
+                lastDoc = snapshot.docs[snapshot.docs.length - 1];
+                // Filtrar solo las encuestas de Haridscount
+                const newAuditorias = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(doc => doc.tipoEncuesta === 'haridscount');
+                
+                // SOLUCIÓN TEMPORAL: Ordenar los datos en el cliente mientras se crea el índice
+                newAuditorias.sort((a, b) => {
+                    // Tratar de ordenar por timestamp si existe
+                    const timestampA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                    const timestampB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                    return timestampB - timestampA; // Orden descendente
+                });
+                
+                if (loadMore) {
+                    allAuditorias = [...allAuditorias, ...newAuditorias];
+                } else {
+                    allAuditorias = newAuditorias;
+                }
+                
+                console.log(`🟢 Se encontraron ${newAuditorias.length} encuestas Haridscount en este lote. Total: ${allAuditorias.length}`);
+                
+                if (newAuditorias.length < batchSize) {
+                    allDataLoaded = true;
+                }
+                
+                // Solo actualizar filtros en la carga inicial o si no se han populado aún
+                if ((!loadMore || allAuditorias.length <= batchSize) && !filtersPopulated) {
+                    populateFilters(allAuditorias);
+                }
+                
+                // Mostrar mensaje si no hay encuestas Haridscount
+                if (!loadMore && allAuditorias.length === 0) {
+                    errorMessage.classList.remove('hidden');
+                    errorMessage.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-blue-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="text-blue-600 font-semibold">No hay encuestas Haridscount registradas</p>
+                        <p class="text-sm text-gray-600 mt-2">
+                            Las encuestas creadas con el nuevo formulario aparecerán aquí.<br>
+                            Las auditorías antiguas no se muestran en esta vista.
+                        </p>
+                    `;
+                } else {
+                    errorMessage.classList.add('hidden');
+                }
+                
+                applyFilters();
+            }
+        } catch (error) {
+            console.error("🔴 Error al obtener los documentos:", error);
+            errorMessage.classList.remove('hidden');
+            
+            // Mostrar mensaje específico si es un error de índice
+            if (error.message && error.message.includes('index')) {
+                errorMessage.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-yellow-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-yellow-600">Se requiere crear un índice en Firebase</p>
+                    <p class="text-sm text-yellow-700 mt-2">
+                        Usa el enlace proporcionado en la consola para crear el índice necesario.<br>
+                        Después de crear el índice, espera unos minutos y vuelve a cargar la página.
+                    </p>
+                    <div class="mt-4">
+                        <a href="https://console.firebase.google.com/project/eficacia-auditoria/firestore/indexes" 
+                           target="_blank" 
+                           class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl">
+                            Ir a Índices de Firebase
+                        </a>
+                    </div>
+                `;
+            }
+        } finally {
+            loadingIndicator.classList.add('hidden');
+            isLoadingMore = false;
+        }
+    }        function populateFilters(auditorias) {
+            console.log("🟡 Llenando filtros...");
+            
+            // Evitar llenar filtros si ya han sido populados y se trata de una carga adicional
+            if (filtersPopulated && filterCity.options.length > 1 && filterGestor.options.length > 1) {
+                console.log("Filtros ya populados, omitiendo...");
+                return;
+            }
+            
+            const cities = new Set();
+            const gestores = new Set();
+
+            // Guardar los valores seleccionados actualmente
+            const selectedCity = filterCity.value;
+            const selectedGestor = filterGestor.value;
+
+            // Limpiar los selectores, pero manteniendo la primera opción (Todas las...)
+            while (filterCity.options.length > 1) {
+                filterCity.remove(1);
+            }
+            
+            while (filterGestor.options.length > 1) {
+                filterGestor.remove(1);
+            }
+
+            // Llenar los conjuntos con valores únicos
+            auditorias.forEach(auditoria => {
+                const datos = getDatosGenerales(auditoria);
+                if (datos.ciudad) cities.add(datos.ciudad);
+                if (datos.nombreGestor) gestores.add(datos.nombreGestor);
+            });
+
+            // Ordenar los valores para mejor experiencia de usuario
+            const sortedCities = Array.from(cities).sort();
+            const sortedGestores = Array.from(gestores).sort();
+
+            // Añadir las opciones ordenadas
+            sortedCities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                filterCity.appendChild(option);
+            });
+
+            sortedGestores.forEach(gestor => {
+                const option = document.createElement('option');
+                option.value = gestor;
+                option.textContent = gestor;
+                filterGestor.appendChild(option);
+            });
+            
+            // Restaurar las selecciones previas si existen en las nuevas opciones
+            if (selectedCity) {
+                for (let i = 0; i < filterCity.options.length; i++) {
+                    if (filterCity.options[i].value === selectedCity) {
+                        filterCity.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            if (selectedGestor) {
+                for (let i = 0; i < filterGestor.options.length; i++) {
+                    if (filterGestor.options[i].value === selectedGestor) {
+                        filterGestor.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            // Marcar filtros como populados
+            filtersPopulated = true;
+        }
+
+        function applyFilters() {
+            console.log("🟡 Aplicando filtros...");
+            const cityFilter = filterCity.value;
+            const gestorFilter = filterGestor.value;
+            const dateFilter = filterDate.value;
+            
+            // Verificar si hay filtros activos
+            const hasActiveFilters = cityFilter || gestorFilter || dateFilter;
+            
+            // Si tenemos pocos datos o no hay filtros, filtrar en el cliente
+            if (allAuditorias.length < 100 || !hasActiveFilters) {
+                // Optimización del filtrado en cliente
+                filteredAuditorias = allAuditorias.filter(auditoria => {
+                    const datos = getDatosGenerales(auditoria);
+                    
+                    // Optimización: salir temprano si falla alguna condición
+                    if (cityFilter && datos.ciudad !== cityFilter) return false;
+                    
+                    if (gestorFilter) {
+                        const gestorLower = datos.nombreGestor.toLowerCase();
+                        const filterLower = gestorFilter.toLowerCase();
+                        if (!gestorLower.includes(filterLower)) return false;
+                    }
+                    
+                    if (dateFilter && datos.fecha !== dateFilter) return false;
+                    
+                    return true;
+                });
+                
+                console.log(`🟢 Se encontraron ${filteredAuditorias.length} auditorías que coinciden con los filtros.`);
+                
+                // Comprobar si necesitamos cargar más datos para tener suficientes resultados
+                if (filteredAuditorias.length < 5 && !allDataLoaded) {
+                    console.log("🔄 Cargando más datos para obtener suficientes resultados filtrados...");
+                    fetchAuditorias(true).then(() => {
+                        // Volvemos a aplicar los filtros después de cargar más datos
+                        applyFilters();
+                    });
+                    return; // Salir y esperar la recarga
+                }
+            } else {
+                // Para conjuntos grandes con filtros, intentar refinar la búsqueda en Firestore
+                // Nota: Esto requeriría modificar fetchAuditorias para aceptar parámetros de filtro
+                console.log("💡 Considerar implementar filtrado en servidor para grandes conjuntos de datos");
+                filteredAuditorias = allAuditorias.filter(auditoria => {
+                    const datos = getDatosGenerales(auditoria);
+                    const matchesCity = !cityFilter || datos.ciudad === cityFilter;
+                    const matchesGestor = !gestorFilter || datos.nombreGestor.toLowerCase().includes(gestorFilter.toLowerCase());
+                    const matchesDate = !dateFilter || datos.fecha === dateFilter;
+                    return matchesCity && matchesGestor && matchesDate;
+                });
+            }
+            
+            currentPage = 1;
+            renderAuditorias();
+            
+            // Mostrar un botón "Cargar más resultados" si es necesario
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            if (!loadMoreBtn && !allDataLoaded && filteredAuditorias.length < allAuditorias.length * 0.5) {
+                const loadMoreContainer = document.createElement('div');
+                loadMoreContainer.className = 'text-center mt-6';
+                loadMoreContainer.innerHTML = `
+                    <button id="load-more-btn" class="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
+                        Cargar más resultados
+                    </button>
+                `;
+                auditoriasContainer.after(loadMoreContainer);
+                document.getElementById('load-more-btn').addEventListener('click', () => {
+                    fetchAuditorias(true).then(applyFilters);
+                });
+            } else if (loadMoreBtn && (allDataLoaded || filteredAuditorias.length >= 20)) {
+                loadMoreBtn.parentElement.remove();
+            }
+        }
+
+        function renderAuditorias() {
+            // Si estamos cargando datos adicionales, no limpiamos el contenedor
+            const isAppendingData = document.getElementById('load-more-placeholder');
+            
+            if (!isAppendingData) {
+                auditoriasContainer.innerHTML = '';
+            } else if (isAppendingData) {
+                isAppendingData.remove();
+            }
+            
+            if (filteredAuditorias.length === 0) {
+                auditoriasContainer.innerHTML = '<p class="text-center text-gray-500 p-6">No hay encuestas que coinciden con los filtros.</p>';
+                paginationControls.classList.add('hidden');
+                
+                // Si no tenemos resultados pero tampoco hemos cargado todos los datos, mostrar opción para cargar más
+                if (!allDataLoaded) {
+                    const loadMoreBtn = document.createElement('div');
+                    loadMoreBtn.className = 'text-center mt-4';
+                    loadMoreBtn.innerHTML = `
+                        <button class="px-4 py-2 bg-blue-100 text-blue-700 rounded-xl hover:bg-blue-200 transition">
+                            Buscar más encuestas
+                        </button>
+                    `;
+                    loadMoreBtn.querySelector('button').addEventListener('click', () => {
+                        fetchAuditorias(true);
+                    });
+                    auditoriasContainer.appendChild(loadMoreBtn);
+                }
+                return;
+            }
+            
+            // Con infinite scroll, mostramos todas las auditorías filtradas
+            // sin limitarnos a itemsPerPage
+            filteredAuditorias.forEach(auditoria => {
+                // Verificamos si esta auditoría ya está renderizada
+                const existingCard = document.getElementById(`auditoria-card-${auditoria.id}`);
+                if (existingCard) return; // Evitar duplicados
+                
+                const datos = getDatosGenerales(auditoria);
+                const card = document.createElement('div');
+                card.id = `auditoria-card-${auditoria.id}`;
+                card.className = 'bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 cursor-pointer';
+                
+                // Mostrar un indicador visual si los datos son nuevos (menos de 24 horas)
+                let newBadge = '';
+                if (auditoria.timestamp) {
+                    const timestamp = new Date(auditoria.timestamp);
+                    const now = new Date();
+                    const isNew = (now - timestamp) < 24 * 60 * 60 * 1000;
+                    if (isNew) {
+                        newBadge = `<span class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs">Nuevo</span>`;
+                    }
+                }
+                
+                card.innerHTML = `
+                    <div class="relative">
+                        ${newBadge}
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Auditoría de ${datos.puntoVenta || 'Sin Punto de Venta'}</h3>
+                        <p class="text-sm text-gray-600"><strong>Gestor:</strong> ${datos.nombreGestor || 'Sin gestor'}</p>
+                        <p class="text-sm text-gray-600"><strong>Ciudad:</strong> ${datos.ciudad || 'Sin ciudad'}</p>
+                        <p class="text-sm text-gray-600"><strong>Fecha:</strong> ${datos.fecha || 'Sin fecha'}</p>
+                        ${auditoria.horaIngreso ? `<p class="text-sm text-blue-600"><strong>🕐 Hora Ingreso:</strong> ${auditoria.horaIngreso}</p>` : ''}
+                        ${auditoria.horaSalida ? `<p class="text-sm text-green-600"><strong>🕐 Hora Salida:</strong> ${auditoria.horaSalida}</p>` : ''}
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    // Mostrar un mini-loader en la tarjeta mientras se abre el detalle
+                    const originalContent = card.innerHTML;
+                    card.innerHTML += '<div class="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center"><div class="animate-spin h-6 w-6 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>';
+                    
+                    // Pequeño retraso para mejor UX
+                    setTimeout(() => {
+                        showDetails(auditoria);
+                        card.innerHTML = originalContent; // Restaurar contenido
+                    }, 150);
+                });
+                
+                auditoriasContainer.appendChild(card);
+            });
+            
+            // Si hay más datos por cargar, agregar un indicador al final
+            if (!allDataLoaded) {
+                const loadingPlaceholder = document.createElement('div');
+                loadingPlaceholder.id = 'load-more-placeholder';
+                loadingPlaceholder.className = 'text-center py-6 text-gray-500';
+                loadingPlaceholder.innerHTML = 'Desplázate hacia abajo para cargar más...';
+                auditoriasContainer.appendChild(loadingPlaceholder);
+            }
+            
+            // Ocultar controles de paginación ya que usamos infinite scroll
+            paginationControls.classList.add('hidden');
+            
+            // Almacenar los datos en caché para acceso rápido la próxima vez
+            if (allAuditorias.length > 0) {
+                if (typeof localCache !== 'undefined') {
+                    localCache.save(allAuditorias);
+                }
+            }
+        }
+
+        function updatePaginationControls(totalPages) {
+            if (totalPages > 1) {
+                paginationControls.classList.remove('hidden');
+                pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+                prevPageButton.disabled = currentPage === 1;
+                nextPageButton.disabled = currentPage === totalPages;
+            } else {
+                paginationControls.classList.add('hidden');
+            }
+        }
+
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredAuditorias.length / itemsPerPage);
+            const newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderAuditorias();
+            }
+        }
+
+        // showDetails: muestra preguntas y calcula Total/Promedio por sección y total global
+       // Función optimizada para mostrar detalles de auditoría
+    function showDetails(auditoria) {
+        // Mostrar el modal inmediatamente con un indicador de carga
+        detailsModal.classList.remove('hidden');
+        const modalBox = detailsModal.firstElementChild;
+        modalBox.classList.remove('scale-100', 'opacity-100');
+        modalBox.classList.add('scale-95', 'opacity-0');
+        
+        modalContent.innerHTML = '<div class="col-span-2 text-center py-4"><p>Cargando detalles...</p></div>';
+        
+        // Comenzar animación
+        void modalBox.offsetWidth; // reflow
+        modalBox.classList.remove('scale-95', 'opacity-0');
+        modalBox.classList.add('scale-100', 'opacity-100');
+        
+        // Usar setTimeout para permitir que se muestre el modal antes de procesar datos
+        setTimeout(() => {
+            // Procesar detalles después de mostrar el modal
+            procesarYMostrarDetalles(auditoria);
+        }, 50);
+    }
+    
+    // Separar el procesamiento de datos de la visualización para mejorar rendimiento
+    function procesarYMostrarDetalles(auditoria) {
+        // Limpiar el contenido
+        modalContent.innerHTML = '';
+        
+        // Si no hay datos de auditoría, mostrar mensaje
+        if (!auditoria.auditoria || Object.keys(auditoria.auditoria).length === 0) {
+            modalContent.innerHTML = '<div class="col-span-2 text-center py-4"><p>No hay datos disponibles para esta auditoría</p></div>';
+            return;
+        }
+        
+        // Pre-procesamiento: ordenar secciones y calcular totales de una sola vez
+        let totalGlobal = 0;
+        let countGlobal = 0;
+        
+        // Preparar y ordenar las secciones
+        const secciones = Object.keys(auditoria.auditoria).sort((a, b) => {
+            const numA = parseInt(a.match(/\d+/)?.[0] || 0, 10);
+            const numB = parseInt(b.match(/\d+/)?.[0] || 0, 10);
+            return numA - numB; // orden ascendente
+        });
+        
+        // Procesar por lotes para evitar bloquear el navegador
+        procesarLoteSecciones(auditoria, secciones, 0, 3, totalGlobal, countGlobal);
+    }
+    
+    // Procesar secciones por lotes para no bloquear el navegador
+    function procesarLoteSecciones(auditoria, secciones, inicio, tamanoLote, totalGlobal, countGlobal) {
+        const fin = Math.min(inicio + tamanoLote, secciones.length);
+        const fragmento = document.createDocumentFragment();
+        
+        for (let i = inicio; i < fin; i++) {
+            const seccion = secciones[i];
+            const preguntas = auditoria.auditoria[seccion];
+            
+            if (!Array.isArray(preguntas) || preguntas.length === 0) continue;
+            
+            const sectionBox = document.createElement('div');
+            sectionBox.className = 'col-span-1 bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-200';
+            
+            const title = document.createElement('h5');
+            title.className = 'text-lg font-semibold text-blue-700 mb-3';
+            title.textContent = seccion;
+            sectionBox.appendChild(title);
+            
+            const isDatosGenerales = seccion && seccion.toString().toLowerCase().includes('datos gener');
+            
+            const { html, sum, count } = procesarPreguntas(preguntas, isDatosGenerales);
+            sectionBox.innerHTML += html;
+            
+            if (!isDatosGenerales && count > 0) {
+                const promedio = sum / count;
+                const footer = document.createElement('div');
+                footer.className = 'mt-4 border-t pt-2 text-right text-sm text-gray-700';
+                footer.innerHTML = `
+                    <div><strong>Total sección:</strong> ${sum.toFixed(2)}</div>
+                    <div><strong>Promedio sección:</strong> ${promedio.toFixed(2)}</div>
+                `;
+                sectionBox.appendChild(footer);
+                
+                totalGlobal += sum;
+                countGlobal += count;
+            }
+            
+            fragmento.appendChild(sectionBox);
+        }
+        
+        // Añadir el fragmento al DOM
+        modalContent.appendChild(fragmento);
+        
+        // Si hay más secciones, programar el siguiente lote
+        if (fin < secciones.length) {
+            setTimeout(() => {
+                procesarLoteSecciones(auditoria, secciones, fin, tamanoLote, totalGlobal, countGlobal);
+            }, 10);
+        } else {
+            // Todos los lotes procesados, mostrar el resumen global
+            if (countGlobal > 0) {
+                const resumenBox = document.createElement('div');
+                resumenBox.className = 'col-span-1 md:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-gray-200';
+                const promedioGlobal = totalGlobal / countGlobal;
+                resumenBox.innerHTML = `
+                    <h5 class="text-lg font-semibold text-gray-800 mb-2">Promedio global</h5>
+                    <div><strong>Promedio global (todas respuestas):</strong> ${promedioGlobal.toFixed(2)}</div>
+                `;
+                modalContent.appendChild(resumenBox);
+            }
+        }
+    }
+    
+    // Función para procesar preguntas y generar HTML
+    function procesarPreguntas(preguntas, isDatosGenerales) {
+        let html = '';
+        let sum = 0;
+        let count = 0;
+        
+        preguntas.forEach(item => {
+            const pregunta = (item.pregunta || '').toString().trim();
+            const respuesta = (item.respuesta == null ? '' : item.respuesta).toString().trim();
+            const observacion = (item.observacion || '').toString().trim();
+            
+            if (!pregunta && !respuesta && !observacion) return;
+            
+            html += `
+                <div class="mb-2">
+                    <p class="text-sm font-medium text-gray-700">${pregunta || '(Pregunta sin texto)'}</p>
+                    <p class="text-gray-900 bg-white px-3 py-1 rounded-lg shadow-sm">${respuesta || 'Sin respuesta'}</p>
+                    ${observacion ? `<p class="text-xs text-gray-600 bg-yellow-50 px-3 py-2 rounded-lg mt-1 italic border-l-2 border-yellow-400"><strong>Observación:</strong> ${observacion}</p>` : ''}
+                </div>
+            `;
+            
+            if (!isDatosGenerales) {
+                const num = parseNumeric(respuesta);
+                if (!isNaN(num)) {
+                    sum += num;
+                    count++;
+                }
+            }
+        });
+        
+        return { html, sum, count };
+    }
+
+    // Cerrar modal: quitar clases y ocultar después de la transición (usa timeout seguro)
+    function closeModal() {
+        const modalBox = detailsModal.firstElementChild;
+        if (!modalBox) {
+            detailsModal.classList.add('hidden');
+            return;
+        }
+
+        // quitar clases de visible
+        modalBox.classList.remove('scale-100', 'opacity-100');
+        modalBox.classList.add('scale-95', 'opacity-0');
+
+        // ocultar overlay después del tiempo de transición (duration-300 -> 300ms)
+        // le damos un pequeño buffer (330ms)
+        setTimeout(() => {
+            detailsModal.classList.add('hidden');
+            // Limpiar contenido para liberar memoria
+            modalContent.innerHTML = '';
+        }, 330);
+    }
+
+    // Función para mostrar alertas modernas
+    function showAlert(title, message, type = 'info') {
+        const alertModal = document.getElementById('alert-modal');
+        const alertTitle = document.getElementById('alert-title');
+        const alertMessage = document.getElementById('alert-message');
+        const alertIcon = document.getElementById('alert-icon');
+        const modalBox = alertModal.querySelector('div > div');
+        
+        // Configurar el icono según el tipo
+        let iconHTML = '';
+        if (type === 'success') {
+            iconHTML = `
+                <svg class="h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            `;
+        } else if (type === 'error') {
+            iconHTML = `
+                <svg class="h-16 w-16 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            `;
+        } else {
+            iconHTML = `
+                <svg class="h-16 w-16 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            `;
+        }
+        
+        alertIcon.innerHTML = iconHTML;
+        alertTitle.textContent = title;
+        alertMessage.textContent = message;
+        
+        // Mostrar modal con animación
+        alertModal.classList.remove('hidden');
+        setTimeout(() => {
+            modalBox.classList.remove('scale-95', 'opacity-0');
+            modalBox.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    // Sistema de exportación a Excel
+    function exportToExcel() {
+        // Mostrar indicador de carga
+        const exportBtn = document.getElementById('export-excel-btn');
+        const originalContent = exportBtn.innerHTML;
+        exportBtn.disabled = true;
+        exportBtn.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Preparando datos...
+        `;
+
+        // Usamos un timeout para permitir que la UI se actualice antes de procesar
+        setTimeout(async () => {
+            try {
+                // Si no hay datos, primero cargar todos
+                if (allAuditorias.length === 0) {
+                    await loadAllDataForExport();
+                }
+
+                // Organizar los datos para exportar
+                const workbookData = prepareExcelData(allAuditorias);
+                
+                // Crear y descargar el archivo Excel
+                generateExcelFile(workbookData);
+                
+                // Restaurar botón
+                exportBtn.innerHTML = originalContent;
+                exportBtn.disabled = false;
+            } catch (error) {
+                console.error('Error durante la exportación:', error);
+                exportBtn.innerHTML = originalContent;
+                exportBtn.disabled = false;
+                
+                showAlert('Error de exportación', 
+                    'No se pudieron exportar los datos. Inténtalo de nuevo más tarde. Error: ' + error.message, 'error');
+            }
+        }, 100);
+    }
+
+    // Cargar todos los datos para exportación
+    async function loadAllDataForExport() {
+        // Si ya tenemos todos los datos, retornamos
+        if (allDataLoaded) return;
+        
+        const tempLoadingDiv = document.createElement('div');
+        tempLoadingDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        tempLoadingDiv.innerHTML = `
+            <div class="bg-white p-6 rounded-xl shadow-xl text-center">
+                <div class="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p class="text-lg font-medium">Cargando todas las auditorías para exportación...</p>
+                <p class="text-sm text-gray-500 mt-2">Esto puede tomar un momento.</p>
+            </div>
+        `;
+        document.body.appendChild(tempLoadingDiv);
+        
+        try {
+            // Cargar todos los datos en lotes hasta completar
+            let loadingBatch = true;
+            while (loadingBatch && !allDataLoaded) {
+                await new Promise(resolve => {
+                    // Configurar para cargar el siguiente lote
+                    fetchAuditorias(true)
+                        .then(() => {
+                            if (allDataLoaded) {
+                                loadingBatch = false;
+                            }
+                            resolve();
+                        })
+                        .catch(err => {
+                            console.error("Error cargando datos para Excel:", err);
+                            loadingBatch = false;
+                            resolve();
+                        });
+                });
+            }
+        } finally {
+            document.body.removeChild(tempLoadingDiv);
+        }
+    }
+
+    // Preparar datos para Excel en un formato adecuado
+    function prepareExcelData(auditorias) {
+        // Crear una estructura organizada para cada hoja
+        const workbook = {
+            // Hoja principal con el resumen de todas las auditorías
+            "Resumen": [],
+            // Otras hojas se crearán dinámicamente
+        };
+        
+        // Crear el encabezado de la hoja de resumen
+        workbook["Resumen"].push([
+            "ID de Auditoría", 
+            "Fecha",
+            "Gestor",
+            "Ciudad",
+            "Punto de Venta",
+            "Hora Ingreso",
+            "Hora Salida",
+            "Promedio Global",
+            "Fecha de Registro"
+        ]);
+
+        // Procesar cada auditoría
+        auditorias.forEach((auditoria, index) => {
+            const datos = getDatosGenerales(auditoria);
+            const timestamp = auditoria.timestamp ? new Date(auditoria.timestamp) : new Date();
+            
+            // Calcular el promedio global
+            let totalPuntos = 0;
+            let totalPreguntas = 0;
+            let sectoresObject = {};
+            
+            if (auditoria.auditoria) {
+                Object.keys(auditoria.auditoria).forEach(seccion => {
+                    // Saltamos la sección de datos generales para el cálculo de promedios
+                    if (seccion.toLowerCase().includes('datos gener')) return;
+                    
+                    const preguntas = auditoria.auditoria[seccion];
+                    if (!Array.isArray(preguntas)) return;
+                    
+                    // Crear una hoja para cada sector si no existe
+                    // Limpiar nombre de caracteres inválidos: : \ / ? * [ ]
+                    const sectorSheetName = `Sector - ${seccion.replace(/[:\\\/?\*\[\]]/g, '-').substring(0, 28)}`;
+                    if (!workbook[sectorSheetName]) {
+                        workbook[sectorSheetName] = [["ID", "Fecha", "Gestor", "Ciudad", "Punto de Venta", "Pregunta", "Respuesta", "Valor Numérico"]];
+                    }
+                    
+                    // Procesar cada pregunta
+                    preguntas.forEach(item => {
+                        const pregunta = (item.pregunta || '').toString().trim();
+                        const respuesta = (item.respuesta == null ? '' : item.respuesta).toString().trim();
+                        const valorNumerico = parseNumeric(respuesta);
+                        
+                        // Agregar a la hoja del sector correspondiente
+                        workbook[sectorSheetName].push([
+                            auditoria.id || `Auditoría-${index+1}`,
+                            datos.fecha || 'Sin fecha',
+                            datos.nombreGestor || 'Sin gestor',
+                            datos.ciudad || 'Sin ciudad',
+                            datos.puntoVenta || 'Sin punto de venta',
+                            pregunta,
+                            respuesta,
+                            isNaN(valorNumerico) ? '' : valorNumerico
+                        ]);
+                        
+                        // Sumar para el promedio global
+                        if (!isNaN(valorNumerico)) {
+                            totalPuntos += valorNumerico;
+                            totalPreguntas++;
+                            
+                            // Agregar al objeto de sectores para promedio por sector
+                            if (!sectoresObject[seccion]) {
+                                sectoresObject[seccion] = { total: 0, count: 0 };
+                            }
+                            sectoresObject[seccion].total += valorNumerico;
+                            sectoresObject[seccion].count++;
+                        }
+                    });
+                });
+            }
+            
+            // Calcular promedio global
+            const promedioGlobal = totalPreguntas > 0 ? totalPuntos / totalPreguntas : 0;
+            
+            // Agregar fila a la hoja de resumen
+            workbook["Resumen"].push([
+                auditoria.id || `Auditoría-${index+1}`,
+                datos.fecha || 'Sin fecha',
+                datos.nombreGestor || 'Sin gestor',
+                datos.ciudad || 'Sin ciudad',
+                datos.puntoVenta || 'Sin punto de venta',
+                auditoria.horaIngreso || '',
+                auditoria.horaSalida || '',
+                promedioGlobal.toFixed(2),
+                timestamp.toLocaleString()
+            ]);
+            
+            // Crear hoja para esta auditoría específica
+            const auditSheetName = `Aud-${index+1}`;
+            workbook[auditSheetName] = [["Sección", "Pregunta", "Respuesta", "Valor Numérico"]];
+            
+            // Procesar detalle de la auditoría para su hoja individual
+            if (auditoria.auditoria) {
+                Object.keys(auditoria.auditoria).sort().forEach(seccion => {
+                    const preguntas = auditoria.auditoria[seccion];
+                    if (!Array.isArray(preguntas)) return;
+                    
+                    preguntas.forEach(item => {
+                        const pregunta = (item.pregunta || '').toString().trim();
+                        const respuesta = (item.respuesta == null ? '' : item.respuesta).toString().trim();
+                        const valorNumerico = parseNumeric(respuesta);
+                        
+                        workbook[auditSheetName].push([
+                            seccion,
+                            pregunta,
+                            respuesta,
+                            isNaN(valorNumerico) ? '' : valorNumerico
+                        ]);
+                    });
+                });
+            }
+            
+            // Agregar resumen por sectores al final de la hoja individual
+            workbook[auditSheetName].push([]);
+            workbook[auditSheetName].push(["Resumen por Sectores"]);
+            workbook[auditSheetName].push(["Sector", "Promedio", "Total Puntos", "Total Preguntas"]);
+            
+            Object.keys(sectoresObject).forEach(sector => {
+                const data = sectoresObject[sector];
+                const promedio = data.count > 0 ? data.total / data.count : 0;
+                
+                workbook[auditSheetName].push([
+                    sector,
+                    promedio.toFixed(2),
+                    data.total.toFixed(2),
+                    data.count
+                ]);
+            });
+            
+            // Agregar promedio global al final
+            workbook[auditSheetName].push([]);
+            workbook[auditSheetName].push(["Promedio Global", promedioGlobal.toFixed(2), "Total de Puntos:", totalPuntos.toFixed(2), "Total de Preguntas:", totalPreguntas]);
+        });
+        
+        // Crear hoja de métricas generales
+        workbook["Métricas Generales"] = createGeneralMetricsSheet(auditorias);
+        
+        return workbook;
+    }
+
+    // Crear hoja con métricas generales y análisis estadístico
+    function createGeneralMetricsSheet(auditorias) {
+        // Estructura de hoja para métricas
+        const sheet = [
+            ["Métricas Generales de Auditorías"],
+            [],
+            ["Métrica", "Valor"]
+        ];
+        
+        // Estadísticas básicas
+        sheet.push(["Total de Auditorías", auditorias.length]);
+        
+        // Análisis por ciudad
+        const ciudades = {};
+        const gestores = {};
+        const puntosVenta = {};
+        let totalPromedio = 0;
+        let auditoriaConPromedio = 0;
+        
+        auditorias.forEach(auditoria => {
+            const datos = getDatosGenerales(auditoria);
+            
+            // Contar por ciudad
+            if (datos.ciudad) {
+                ciudades[datos.ciudad] = (ciudades[datos.ciudad] || 0) + 1;
+            }
+            
+            // Contar por gestor
+            if (datos.nombreGestor) {
+                gestores[datos.nombreGestor] = (gestores[datos.nombreGestor] || 0) + 1;
+            }
+            
+            // Contar por punto de venta
+            if (datos.puntoVenta) {
+                puntosVenta[datos.puntoVenta] = (puntosVenta[datos.puntoVenta] || 0) + 1;
+            }
+            
+            // Calcular promedio global de la auditoría
+            let totalPuntos = 0;
+            let totalPreguntas = 0;
+            
+            if (auditoria.auditoria) {
+                Object.keys(auditoria.auditoria).forEach(seccion => {
+                    if (seccion.toLowerCase().includes('datos gener')) return;
+                    
+                    const preguntas = auditoria.auditoria[seccion];
+                    if (!Array.isArray(preguntas)) return;
+                    
+                    preguntas.forEach(item => {
+                        const valorNumerico = parseNumeric(item.respuesta);
+                        if (!isNaN(valorNumerico)) {
+                            totalPuntos += valorNumerico;
+                            totalPreguntas++;
+                        }
+                    });
+                });
+            }
+            
+            if (totalPreguntas > 0) {
+                const promedio = totalPuntos / totalPreguntas;
+                totalPromedio += promedio;
+                auditoriaConPromedio++;
+            }
+        });
+        
+        // Añadir promedio general
+        const promedioGeneral = auditoriaConPromedio > 0 ? totalPromedio / auditoriaConPromedio : 0;
+        sheet.push(["Promedio General", promedioGeneral.toFixed(2)]);
+        sheet.push([]);
+        
+        // Añadir distribución por ciudades
+        sheet.push(["Distribución por Ciudades"]);
+        sheet.push(["Ciudad", "Cantidad", "Porcentaje"]);
+        
+        Object.entries(ciudades)
+            .sort((a, b) => b[1] - a[1]) // Ordenar descendente por cantidad
+            .forEach(([ciudad, cantidad]) => {
+                const porcentaje = (cantidad / auditorias.length) * 100;
+                sheet.push([ciudad, cantidad, `${porcentaje.toFixed(1)}%`]);
+            });
+            
+        sheet.push([]);
+        
+        // Añadir distribución por gestores
+        sheet.push(["Distribución por Gestores"]);
+        sheet.push(["Gestor", "Cantidad", "Porcentaje"]);
+        
+        Object.entries(gestores)
+            .sort((a, b) => b[1] - a[1])
+            .forEach(([gestor, cantidad]) => {
+                const porcentaje = (cantidad / auditorias.length) * 100;
+                sheet.push([gestor, cantidad, `${porcentaje.toFixed(1)}%`]);
+            });
+            
+        sheet.push([]);
+        
+        // Añadir fechas importantes
+        const fechas = auditorias.map(a => {
+            const date = a.timestamp ? new Date(a.timestamp) : null;
+            return date ? date.getTime() : 0;
+        }).filter(t => t > 0);
+        
+        if (fechas.length > 0) {
+            const primeraFecha = new Date(Math.min(...fechas));
+            const ultimaFecha = new Date(Math.max(...fechas));
+            
+            sheet.push(["Información Temporal"]);
+            sheet.push(["Primera auditoría registrada", primeraFecha.toLocaleDateString()]);
+            sheet.push(["Última auditoría registrada", ultimaFecha.toLocaleDateString()]);
+            
+            // Calcular días entre la primera y última auditoría
+            const diasTotales = Math.ceil((ultimaFecha - primeraFecha) / (1000 * 60 * 60 * 24));
+            sheet.push(["Días entre primera y última auditoría", diasTotales]);
+            
+            if (diasTotales > 0) {
+                const promedioPorDia = auditorias.length / diasTotales;
+                sheet.push(["Promedio de auditorías por día", promedioPorDia.toFixed(2)]);
+            }
+        }
+        
+        return sheet;
+    }
+
+    // Generar y descargar el archivo Excel
+    function generateExcelFile(workbookData) {
+        try {
+            // Crear un nuevo libro de trabajo
+            const wb = XLSX.utils.book_new();
+            
+            // Añadir cada hoja al libro
+            Object.entries(workbookData).forEach(([sheetName, sheetData]) => {
+                // Crear una hoja de trabajo desde los datos de matriz
+                const ws = XLSX.utils.aoa_to_sheet(sheetData);
+                
+                // Configurar el ancho de las columnas
+                const columnWidths = [];
+                sheetData[0].forEach((_, i) => {
+                    // Encontrar el texto más largo en esta columna
+                    let maxLength = 10; // Valor mínimo predeterminado
+                    sheetData.forEach(row => {
+                        if (row[i] !== undefined) {
+                            const cellLength = String(row[i]).length;
+                            if (cellLength > maxLength) {
+                                maxLength = cellLength;
+                            }
+                        }
+                    });
+                    // Limitar el ancho máximo para evitar columnas demasiado anchas
+                    maxLength = Math.min(maxLength, 50);
+                    columnWidths.push({ wch: maxLength + 2 }); // +2 para algo de espacio adicional
+                });
+                ws['!cols'] = columnWidths;
+                
+                // Añadir la hoja al libro
+                // Limpiar caracteres inválidos: : \ / ? * [ ]
+                const safeSheetName = sheetName
+                    .replace(/[:\\\/?\*\[\]]/g, '-')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .substring(0, 31);
+                XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
+            });
+            
+            // Generar el archivo con fecha actual en el nombre
+            const dateStr = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+            const fileName = `Auditorias_Export_${dateStr}.xlsx`;
+            
+            // Usar FileSaver.js para mejor compatibilidad
+            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, fileName);
+            
+            // Mostrar mensaje de éxito
+            showAlert('Exportación Exitosa', `Se ha descargado el archivo "${fileName}" con todos los datos de las auditorías.`, 'success');
+        } catch (error) {
+            console.error("Error generando el archivo Excel:", error);
+            throw new Error("No se pudo generar el archivo Excel: " + error.message);
+        }
+    }
+
+    // Evento para el botón de exportación
+    document.addEventListener('DOMContentLoaded', function() {
+        const exportBtn = document.getElementById('export-excel-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', exportToExcel);
+        }
+    });
+
+    </script>
+    <script>
+        // Actualizar año automáticamente
+        document.getElementById('year-copy').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>
